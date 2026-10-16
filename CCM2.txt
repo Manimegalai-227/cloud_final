@@ -1,0 +1,392 @@
+Hadoop
+
+sudo apt update
+sudo apt install ssh -y
+sudo apt install openjdk-11-jdk -y
+java -version
+cd ~
+wget https://archive.apache.org/dist/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+tar -xzf hadoop-3.3.6.tar.gz
+mv hadoop-3.3.6 Hadoop
+ls ~/Hadoop
+nano ~/.bashrc
+
+
+
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export HADOOP_HOME=$HOME/hadoop
+export HADOOP_INSTALL=$HADOOP_HOME
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+export HADOOP_YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native"
+
+
+
+Ctrl + O, Enter, then Ctrl + X.
+
+
+source ~/.bashrc
+echo $JAVA_HOME
+nano ~/hadoop/etc/hadoop/hadoop-env.sh
+
+
+Set the Java line to:
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+
+
+mkdir -p ~/hadoop/data/namenode
+mkdir -p ~/hadoop/data/datanode
+ls ~/hadoop/data
+
+nano ~/hadoop/etc/hadoop/core-site.xml
+
+<property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://localhost:9000</value>
+</property>
+
+
+nano ~/hadoop/etc/hadoop/hdfs-site.xml
+
+<property>
+    <name>dfs.replication</name>
+    <value>1</value>
+</property>
+
+<property>
+    <name>dfs.namenode.name.dir</name>
+    <value>file:///home/vboxuser/hadoop/data/namenode</value>
+</property>
+
+<property>
+    <name>dfs.datanode.data.dir</name>
+    <value>file:///home/vboxuser/hadoop/data/datanode</value>
+</property>
+
+
+
+
+cp ~/hadoop/etc/hadoop/mapred-site.xml.template ~/hadoop/etc/hadoop/mapred-site.xml
+nano ~/hadoop/etc/hadoop/mapred-site.xml
+
+
+<property>
+    <name>mapreduce.framework.name</name>
+    <value>yarn</value>
+</property>
+
+
+
+nano ~/hadoop/etc/hadoop/yarn-site.xml
+<property>
+    <name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+</property>
+
+<property>
+    <name>yarn.nodemanager.auxservices.mapreduce.shuffle.class</name>
+    <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+</property>
+
+
+
+
+
+ssh-keygen -t rsa
+Your identification has been saved
+Your public key has been saved
+
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+Output: No output if successful.
+
+
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+
+sudo service ssh start
+ssh localhost
+
+Expected result: You connect to your own Ubuntu machine. Type exit to return to your original terminal.
+
+hadoop version
+
+hdfs namenode -format
+Expected output includes a message similar to:
+Storage directory ... has been successfully formatted.
+
+
+start-dfs.sh
+start-yarn.sh
+
+jps
+hdfs dfs -mkdir -p /test
+hdfs dfs -ls /
+Found 1 items
+... /test
+
+
+stop-yarn.sh
+
+
+
+Spark
+
+sudo apt update
+sudo apt install default-jdk -y
+sudo apt install scala -y
+wget https://archive.apache.org/dist/spark/spark-3.5.7/spark-3.5.7-bin-hadoop3.tgz
+
+tar -xzf spark-3.5.7-bin-hadoop3.tgz
+
+sudo mv spark-3.5.7-bin-hadoop3 /usr/local/spark
+
+echo 'export SPARK_HOME=/usr/local/spark' >> ~/.bashrc
+echo 'export PATH=$PATH:$SPARK_HOME/bin' >> ~/.bashrc
+
+source ~/.bashrc
+ls /usr/local/spark
+ls /usr/local/spark/bin
+/usr/local/spark/bin/spark-shell
+
+new terminal 
+echo "apple mango apple mango apple" > input.txt
+val input = sc.textFile("file:///home/vboxuser/input.txt")
+val words = input.flatMap(line => line.split(" "))
+val pairs = words.map(word => (word, 1))
+val counts = pairs.reduceByKey(_ + _)
+counts.collect().foreach(println)
+counts.saveAsTextFile("file:///home/vboxuser/output")
+
+
+important step: Step 2: Create the input file
+Only at the Ubuntu prompt, run:
+echo "apple mango apple mango apple" > input.txt
+
+
+Verify it:
+cat input.txt
+
+
+Expected output:
+apple mango apple mango apple
+
+
+Step 3: Start Spark again
+spark-shell
+
+
+Wait until you see scala>.
+Step 4: Execute the Word Count program
+Type these commands inside Spark, one at a time.
+val input = sc.textFile("file:///home/vboxuser/input.txt")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sudo apt update
+sudo apt install default-jdk -y
+
+sudo apt install scala -y
+
+sudo apt install wget -y
+
+wget https://archive.apache.org/dist/spark/spark-3.5.7/spark-3.5.7-bin-hadoop3.tgz
+
+tar -xzf spark-3.5.7-bin-hadoop3.tgz
+
+sudo mv spark-3.5.7-bin-hadoop3 /usr/local/spark
+
+echo 'export SPARK_HOME=/usr/local/spark' >> ~/.bashrc
+
+echo 'export PATH=$PATH:$SPARK_HOME/bin' >> ~/.bashrc
+
+source ~/.bashrc
+
+
+
+spark-shell
+
+echo "apple mango apple mango apple" > input.txt
+
+val input = sc.textFile("input.txt")
+
+val words = input.flatMap(line => line.split(" "))
+
+val pairs = words.map(word => (word, 1))
+
+val counts = pairs.reduceByKey(_ + _)
+
+counts.collect().foreach(println)
+
+counts.saveAsTextFile("output")
+
+
+
+
+
+MPI implementation using Python
+
+sudo apt update
+sudo apt install python3 -y
+
+python3 --version
+
+sudo apt install openmpi-bin libopenmpi-dev -y
+mpirun --version
+
+sudo apt install python3-pip python3-mpi4py -y
+
+
+python3 -c "from mpi4py import MPI; print(MPI.Get_library_version())"
+
+
+If the command prints MPI library information without an error, continue to the next step.
+
+
+nano mpi_example.py
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+
+rank = comm.Get_rank()
+size = comm.Get_size()
+
+print(f"Hello from process {rank} out of {size}")
+
+Save the file:
+1. Press Ctrl + O.
+2. Press Enter.
+3. Press Ctrl + X.
+
+
+
+mpirun -np 2 python3 mpi_example.py
+Hello from process 0 out of 2
+Hello from process 1 out of 2
+
+
+if error try:
+
+mpirun --oversubscribe -np 2 python3 mpi_example.py
+
+sum of natural numbers
+
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
+n = 10
+total = sum(range(1, n + 1))
+
+if rank == 0:
+    print("Sum of natural numbers =", total)
+
+
+min and max
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
+numbers = [10, 5, 20, 3, 15]
+
+minimum = min(numbers)
+
+if rank == 0:
+    print("Minimum =", minimum)
+
+even or odd:
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
+n = 10
+
+if rank == 0:
+    if n % 2 == 0:
+        print(n, "is Even")
+    else:
+        print(n, "is Odd")
+factorial :
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
+n = 5
+fact = 1
+
+if rank == 0:
+    for i in range(1, n + 1):
+        fact *= i
+
+    print("Factorial =", fact)
+
+
+open mp
+
+sudo apt update
+sudo apt install g++ libomp-dev -y
+g++ --version
+
+nano hello.cpp
+#include <iostream>
+#include <omp.h>
+using namespace std;
+
+int main() {
+    #pragma omp parallel
+    {
+        cout << "Hello World from thread "
+             << omp_get_thread_num() << endl;
+    }
+
+    return 0;
+}
+
+g++ -fopenmp hello.cpp -o hello
+./hello
+
+file name: nano reduction.cpp
+#include <iostream>
+#include <omp.h>
+using namespace std;
+
+int main() {
+    int sum = 0;
+
+    #pragma omp parallel for reduction(+:sum)
+    for (int i = 1; i <= 10; i++) {
+        sum += i;
+    }
+
+    cout << "Sum = " << sum << endl;
+    return 0;
+}
+run:
+g++ -fopenmp reduction.cpp -o reduction
+./reduction
